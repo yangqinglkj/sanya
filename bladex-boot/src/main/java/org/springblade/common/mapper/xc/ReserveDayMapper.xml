@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.xc.ReserveDayMapper">
+
+    <select id="dayValue" resultType="java.lang.String">
+        select value from xc_reserve_day
+        where
+            1=1 and type = #{classType} AND create_time = ( SELECT MAX(create_time) FROM xc_reserve_day )
+        <if test="type == 1">
+            and data = "0天"
+        </if>
+        <if test="type == 2">
+            and data &gt;= "1天" AND data &lt;= "3天"
+        </if>
+        <if test="type == 3">
+            and data &gt; "3天" AND data &lt;= "7天"
+        </if>
+        <if test="type == 4">
+            and data &gt; "7天"
+        </if>
+    </select>
+</mapper>

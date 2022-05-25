@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.analysisNew.AnalysisOriginNewMapper">
+
+    <select id="touristReception" resultType="org.springblade.common.entity.TouristReception">
+        SELECT create_time,type_code,
+        sum(case  when  province = '海南省' then percent else 0 end) as 'prov',
+        sum(case  when  province !='海南省' then percent else 0 end) as 'outprov',
+        (SELECT percent FROM  tx_analysis_new WHERE type = 'population' and create_time = b.create_time limit 1) totalPeople
+        FROM  tx_analysis_origin_new b where 1=1
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code = #{typeCode}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND create_time  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time  &lt;=  #{endTime}
+        </if>
+        GROUP BY create_time,type_code
+    </select>
+
+    <select id="saveBatch">
+        insert into
+            ${tableName}
+            (province,city,property,percent,type_code,create_time)
+        values
+        <foreach collection="list" item="value" separator=",">
+            (#{value.province}, #{value.city},#{value.property},#{value.percent}, #{value.typeCode},#{value.createTime})
+        </foreach>
+    </select>
+
+</mapper>

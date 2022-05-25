@@ -1,0 +1,56 @@
+#数据源配置
+spring:
+  redis:
+    ##redis 单机环境配置
+    host: 129.28.198.149
+    port: 6333
+    password: SFWqbUtAjE7m8qZT
+    database: 0
+    ssl: false
+    timeout: 5000
+    ##redis 集群环境配置
+    #cluster:
+    #  nodes: 127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003
+    #  commandTimeout: 5000
+  datasource:
+    # MySql
+    url: jdbc:mysql://129.28.198.149:8306/sanya?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&tinyInt1isBit=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: 0qtfWP8OInuzdGdT
+    # PostgreSQL
+    #url: jdbc:postgresql://127.0.0.1:5432/bladex_boot
+    #username: postgres
+    #password: 123456
+    # Oracle
+    #url: jdbc:oracle:thin:@127.0.0.1:1521:orcl
+    #username: BLADEX_BOOT
+    #password: BLADEX_BOOT
+    # SqlServer
+    #url: jdbc:sqlserver://127.0.0.1:1433;DatabaseName=bladex_boot
+    #username: bladex_boot
+    #password: bladex_boot
+#  data:
+#    mongodb:
+#      uri: mongodb://sanya:0qtfWP8OInuzdGdT@129.28.198.149:7017/sanya
+#      host: 129.28.198.149
+#      port: 7017
+#      database: sanya
+#第三方登陆
+social:
+  enabled: true
+  domain: http://127.0.0.1:1888
+
+#blade配置
+blade:
+  #分布式锁配置
+  lock:
+    ##是否启用分布式锁
+    enabled: false
+    ##redis服务地址
+    address: redis://127.0.0.1:6379
+  #本地文件上传
+  file:
+    remote-mode: true
+    upload-domain: http://localhost:8999
+    remote-path: /usr/share/nginx/html
+

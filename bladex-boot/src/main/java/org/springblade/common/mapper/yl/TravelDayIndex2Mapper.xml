@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.yl.TravelDayIndex2Mapper">
+
+    <select id="consumptionScaleA" resultType="org.springblade.common.entity.consumptionScale">
+        SELECT
+        a.deal_day as dealDay,
+        a.top1 as top1,
+        a.top2 as top2,
+        a.top3 as top3,
+        a.top4 as top4 FROM
+        ( SELECT  w.deal_day,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 0, 1 ) top1,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 1, 1 ) top2,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 2, 1 ) top3,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 3, 1 ) top4
+        FROM
+        `bm_sanya_travel_day_index2` w
+        ) a
+        WHERE 1=1
+        <if test="startTime != null and startTime != ''">
+            AND a.deal_day &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND a.deal_day  &lt;=  #{endTime}
+        </if>
+        GROUP BY  a.deal_day
+        order by dealDay DESC
+    </select>
+
+
+    <select id="finbByAllCount" resultType="org.springblade.common.entity.consumptionScale">
+        SELECT
+        a.deal_day as dealDay,
+        a.top1 as top1,
+        a.top2 as top2,
+        a.top3 as top3,
+        a.top4 as top4 FROM
+        ( SELECT  w.deal_day,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 0, 1 ) top1,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 1, 1 ) top2,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 2, 1 ) top3,
+        ( SELECT concat(mcc_type,':',trans_num,':',trans_at,':',acct_num) FROM bm_sanya_travel_day_index2 WHERE deal_day = w.deal_day ORDER BY mcc_type ASC LIMIT 3, 1 ) top4
+        FROM
+        `bm_sanya_travel_day_index2` w
+        ) a
+        WHERE 1=1
+        <if test="startTime != null and startTime != ''">
+            AND a.deal_day &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND a.deal_day  &lt;=  #{endTime}
+        </if>
+        GROUP BY  a.deal_day
+    </select>
+
+    <select id="getConsumptionScaleATime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( deal_day ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( deal_day ),'%Y-%m-%d') as minTime
+        FROM
+        `bm_sanya_travel_day_index2`
+    </select>
+</mapper>

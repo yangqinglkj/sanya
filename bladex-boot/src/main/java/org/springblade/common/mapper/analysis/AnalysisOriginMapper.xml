@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.analysis.AnalysisOriginMapper">
+
+    <select id="touristReception" resultType="org.springblade.common.entity.TouristReception">
+        SELECT
+            t1.percent as totalPeople,
+            t2.create_time as createTime,
+            t2.type_code as typeCode,
+            t2.prov as prov,
+	        t2.outprov as outprov
+        FROM
+            tx_analysis t1
+            RIGHT JOIN (
+            SELECT
+                create_time,
+                type_code,
+                sum( CASE WHEN province = '海南省' THEN percent ELSE 0 END ) AS 'prov',
+                sum( CASE WHEN province != '海南省' THEN percent ELSE 0 END ) AS 'outprov'
+            FROM
+                tx_analysis_origin
+            WHERE
+                type_code = #{typeCode}
+            GROUP BY
+                create_time,
+                type_code
+            ORDER BY
+                create_time DESC
+            ) t2 ON date_format( t2.create_time, '%Y-%m-%d' ) = date_format( t1.create_time, '%Y-%m-%d' )
+            AND t2.type_code = t1.type_code
+        WHERE
+            t1.type = "population"
+        <if test="startTime != null and startTime != ''">
+            AND date_format( t1.create_time, '%Y-%m-%d' )  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND date_format( t1.create_time, '%Y-%m-%d' )  &lt;=  #{endTime}
+        </if>
+        order by
+            t1.create_time DESC
+
+    </select>
+
+
+
+
+
+
+    <select id="seleteCount" resultType="org.springblade.common.entity.TouristReception">
+        SELECT create_time,type_code,
+        sum(case  when  province = '海南省' then percent else 0 end) as 'prov',
+        sum(case  when  province !='海南省' then percent else 0 end) as 'outprov',
+        (SELECT percent FROM  tx_analysis WHERE type = 'population' and create_time = b.create_time limit 1) totalPeople
+        FROM  tx_analysis_origin b where 1=1
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code = #{typeCode}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND create_time  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time  &lt;=  #{endTime}
+        </if>
+        GROUP BY create_time,type_code ORDER BY  create_time DESC
+    </select>
+
+    <select id="saveBatch">
+        insert into
+        tx_analysis_origin (province,city,property,percent,type_code,create_time)
+        values
+            <foreach collection="list" item="value" separator=",">
+                (#{value.province}, #{value.city},#{value.property},#{value.percent}, #{value.typeCode},#{value.createTime})
+            </foreach>
+    </select>
+
+    <select id="getTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `tx_analysis_origin`
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND type_code = #{typeCode}
+            </if>
+        </where>
+    </select>
+
+</mapper>

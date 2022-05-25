@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.yl.TravelDayIndex4Mapper">
+
+    <select id="capitaConsumption" resultType="org.springblade.common.entity.capitaConsumptionTopNew">
+        SELECT a.trans_at AS transAt,a.trans_num AS transNum,
+        a.acct_num AS acctNum,(a.trans_at / a.trans_num) AS consume ,
+        a.source_province AS sourceProvince
+        FROM
+        (select (sum(trans_at)) trans_at,(sum(trans_num)) trans_num,(sum(acct_num)) acct_num, source_province
+        FROM  bm_sanya_travel_day_index4  WHERE 1=1
+        <if test="startTime == ''  and endTime == '' ">
+            AND deal_day = (SELECT MAX( deal_day ) FROM bm_sanya_travel_day_index4 )
+        </if>
+        <if test="startTime == null  and endTime == null ">
+            AND deal_day = (SELECT MAX( deal_day ) FROM bm_sanya_travel_day_index4 )
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND deal_day &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND deal_day &lt;= #{endTime}
+        </if>
+        group by source_province ) a  ORDER BY consume DESC
+    </select>
+
+    <select id="getNewTime" resultType="java.lang.String">
+        select DISTINCT deal_day as dealDay from bm_sanya_travel_day_index4 where deal_day = (SELECT MAX( deal_day ) FROM bm_sanya_travel_day_index4 )
+    </select>
+
+    <select id="getCapitaConsumptionTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+         SELECT
+            DATE_FORMAT(max( deal_day ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( deal_day ),'%Y-%m-%d') as minTime
+        FROM
+        `bm_sanya_travel_day_index4`
+    </select>
+</mapper>

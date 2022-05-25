@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.analysisNew.AnalysisNewMapper">
+
+    <select id="touristVolume" resultType="java.util.Map">
+        SELECT MONTH (create_time) mou, SUM(percent) total
+        FROM  tx_analysis_new  WHERE YEAR (create_time ) = date_format(now(),'%Y')  AND type = 'population'
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code = #{typeCode}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND create_time  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time  &lt;=  #{endTime}
+        </if>
+        GROUP BY MONTH (create_time)
+    </select>
+
+
+    <select id="dayPageTourist" resultType="org.springblade.common.entity.tx.analysisNew.AnalysisNewEntity">
+        select * from  tx_analysis_new WHERE  type = 'population'
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code = #{typeCode}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND create_time  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time  &lt;=  #{endTime}
+        </if>
+    </select>
+
+    <select id="travelDistance" resultType="org.springblade.common.entity.TravelDistance">
+        SELECT  create_time,type_code,
+        sum(case property when '短途' then percent else 0 end) as 'shortDistance',
+        sum(case property when '中途' then percent else 0 end) as 'halfway',
+        sum(case property when '长途' then percent else 0 end) as 'longDistance',
+        (SELECT percent FROM  tx_analysis_new WHERE type = 'population' and create_time = b.create_time limit 1) totalPeople
+        FROM tx_analysis_new b where  type = 'distance' AND property !="无旅行"
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code = #{typeCode}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND create_time  &gt;=  #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time  &lt;=  #{endTime}
+        </if>
+        GROUP BY create_time,type_code
+    </select>
+
+    <select id="saveBatch">
+        insert into
+        tx_analysis_new (property,percent,type,type_code,create_time)
+        values
+        <foreach collection="list" item="value" separator=",">
+            (#{value.property}, #{value.percent},#{value.type},#{value.typeCode},#{value.createTime})
+        </foreach>
+    </select>
+
+</mapper>

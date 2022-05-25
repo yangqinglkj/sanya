@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.modules.backstage.mapper.YlBackstageMapper">
+
+    <select id="consumerAres" resultType="org.springblade.common.entity.yl.TravelDayIndex5">
+        select * from bm_sanya_travel_day_index5
+        <where>
+            AND zone != '金鸡岭'
+            AND zone != '河西路'
+            AND zone != '河东路'
+            AND zone != '荔枝沟'
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+            <if test="business != null and business != ''">
+                and  zone = #{business}
+            </if>
+        </where>
+        order by deal_day desc
+    </select>
+
+    <select id="consumerAresGraph" resultType="org.springblade.modules.backstage.vo.ConsumerAresGraphVO">
+        SELECT MONTH
+        ( deal_day ) AS dealDay,
+        sum( trans_at ) AS transAt,
+        sum( acct_num ) AS acctNum,
+        traveller_type
+        FROM
+        bm_sanya_travel_day_index5
+        <where>
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="startTime != null and startTime != '' ">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime !=  null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+            <if test="business != null and business != ''">
+                and  zone = #{business}
+            </if>
+        </where>
+        GROUP BY
+        dealDay,traveller_type
+        order by deal_day desc
+    </select>
+
+    <select id="cityConsumption" resultType="org.springblade.modules.backstage.vo.yl.CityConsumptionVO">
+        SELECT
+        YEAR( deal_day )AS  years,
+        MONTH ( deal_day ) AS months,
+        DAY ( deal_day ) AS days,
+        sum( trans_at ) totalTransAt,
+        sum( trans_num ) totalTransNum,
+        sum( acct_num ) totalAcctNum
+        FROM
+        bm_sanya_travel_day_index1
+        <where>
+            <if test="startTime != null and startTime != '' ">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime !=  null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY
+            years,
+            months,
+            days
+        ORDER BY years DESC ,months DESC ,days DESC
+    </select>
+
+
+    <select id="findAllCount" resultType="org.springblade.common.entity.yl.TravelDayIndex5">
+        select * from bm_sanya_travel_day_index5
+        <where>
+            AND zone != '金鸡岭'
+            AND zone != '河西路'
+            AND zone != '河东路'
+            AND zone != '荔枝沟'
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+            <if test="business != null and business != ''">
+                and  zone = #{business}
+            </if>
+        </where>
+        order by deal_day desc
+    </select>
+
+
+    <select id="allCountA" resultType="org.springblade.modules.backstage.vo.yl.CityConsumptionVO">
+        SELECT
+        YEAR( deal_day )AS  years,
+        MONTH ( deal_day ) AS months,
+        DAY ( deal_day ) AS days,
+        sum( trans_at ) totalTransAt,
+        sum( trans_num ) totalTransNum,
+        sum( acct_num ) totalAcctNum
+        FROM
+        bm_sanya_travel_day_index1
+        <where>
+            <if test="startTime != null and startTime != '' ">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime !=  null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        years,
+        months,
+        days
+    </select>
+
+
+    <select id="allBusinessDistrict" resultType="org.springblade.common.entity.yl.TravelDayIndex5">
+        select deal_day AS dealDay, SUM(trans_at) transAt,SUM(trans_num) transNum,SUM(acct_num) acctNum
+        from bm_sanya_travel_day_index5
+        <where>
+            AND zone != '金鸡岭'
+            AND zone != '河西路'
+            AND zone != '河东路'
+            AND zone != '荔枝沟'
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY deal_day
+        order by deal_day desc
+    </select>
+
+
+    <select id="allBusinessDistrictCount" resultType="org.springblade.common.entity.yl.TravelDayIndex5">
+        select deal_day AS dealDay, SUM(trans_at) transAt,SUM(trans_num) transNum,SUM(acct_num) acctNum
+        from bm_sanya_travel_day_index5
+        <where>
+            AND zone != '金鸡岭'
+            AND zone != '河西路'
+            AND zone != '河东路'
+            AND zone != '荔枝沟'
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and  deal_day >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                and  deal_day &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY deal_day
+        order by deal_day desc
+    </select>
+
+    <select id="getConsumerAresTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( deal_day ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( deal_day ),'%Y-%m-%d') as minTime
+        FROM
+        `bm_sanya_travel_day_index5`
+        <where>
+            <if test="type != null and type != ''">
+                and traveller_type = #{type}
+            </if>
+            <if test="business != null and business != ''">
+                and  zone = #{business}
+            </if>
+        </where>
+    </select>
+    <select id="getCityConsumptionTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( deal_day ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( deal_day ),'%Y-%m-%d') as minTime
+        FROM
+        `bm_sanya_travel_day_index1`
+    </select>
+</mapper>

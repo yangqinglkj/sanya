@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.tx.MigrationProvincesMapper">
+
+
+    <insert id="saveBatch">
+        INSERT INTO tx_migration_provinces (migration_id, adcode, population, area_type,type, create_time) VALUES
+
+        <foreach collection="list" item="value" separator=",">
+            (#{value.migrationId}, #{value.adcode},#{value.population},#{value.areaType}, #{value.type},#{value.createTime})
+        </foreach>
+    </insert>
+</mapper>

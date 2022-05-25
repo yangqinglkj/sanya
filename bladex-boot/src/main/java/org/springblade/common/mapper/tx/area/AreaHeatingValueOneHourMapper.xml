@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.tx.area.AreaHeatingValueOneHourMapper">
+
+
+
+
+    <insert id="saveBatch">
+        INSERT INTO tx_area_heating_value_one_hour (weight, lng, lat, area_code, create_time) VALUES
+        <foreach collection="list" item="value" separator=",">
+            (#{value.weight}, #{value.lng},#{value.lat},#{value.areaCode}, #{value.createTime})
+        </foreach>
+    </insert>
+</mapper>

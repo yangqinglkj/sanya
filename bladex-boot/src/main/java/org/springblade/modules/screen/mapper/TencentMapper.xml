@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.modules.screen.mapper.TencentMapper">
+
+    <select id="areaRanking" resultType="java.lang.String">
+        select area_name from tx_analysis_area_population order by number
+    </select>
+
+    <select id="getZoneImage" resultType="org.springblade.common.vo.AreaVO">
+        select
+            property as name,
+            percent as value
+        from
+            tx_analysis
+        where
+            type_code = #{typeCode}
+        and type = #{property}
+        and CREATE_TIME  > DATE_SUB((SELECT MAX(CREATE_TIME) FROM tx_analysis where type = #{property} and type_code = #{typeCode}), INTERVAL 4 MINUTE)
+    </select>
+
+    <select id="getAreaImage" resultType="org.springblade.common.vo.AreaVO">
+        SELECT
+            property as name,
+            percent as value
+        FROM
+            tx_analysis_new
+        WHERE
+            type_code = #{typeCode}
+            AND type = #{property}
+            AND CREATE_TIME = ( SELECT MAX( CREATE_TIME ) FROM tx_analysis_new where type = #{property} and type_code = #{typeCode})
+    </select>
+
+    <select id="getZonePeople" resultType="java.lang.Integer">
+        SELECT
+            percent
+        FROM
+            tx_analysis
+        WHERE
+            type_code = #{typeCode}
+        AND type = "population"
+        AND CREATE_TIME = (
+        SELECT MAX( CREATE_TIME ) FROM tx_analysis WHERE type = "population" AND type_code = #{typeCode})
+    </select>
+
+    <select id="getAreaPeople" resultType="java.lang.Integer">
+        SELECT
+            people
+        FROM
+            tx_area_people_one_hour
+        where
+            area_code = #{typeCode}
+        AND
+            CREATE_TIME = (SELECT MAX( CREATE_TIME ) FROM tx_area_people_one_hour WHERE area_code = #{typeCode})
+    </select>
+
+
+    <select id="entryAndExit" resultType="java.lang.String">
+        select sum(percent) from tx_analysis_origin where type_code = #{typeCode} and CREATE_TIME  > DATE_SUB((SELECT MAX(CREATE_TIME) FROM tx_analysis), INTERVAL 4 MINUTE)
+        and province = "海南省"
+    </select>
+
+    <select id="getDistance" resultType="org.springblade.common.vo.AnalysisVO">
+        select property as name ,percent as value from tx_analysis where type = "distance" and type_code = #{typeCode} and CREATE_TIME  > DATE_SUB((SELECT MAX(CREATE_TIME) FROM tx_analysis where type = "distance" and type_code = #{typeCode}), INTERVAL 4 MINUTE)
+    </select>
+
+    <select id="getPopulation" resultType="java.lang.String">
+        select percent from tx_analysis where type = "population" and type_code = 0 and CREATE_TIME  > DATE_SUB((SELECT MAX(CREATE_TIME) FROM tx_analysis where type = "population" and type_code = 0), INTERVAL 4 MINUTE)
+    </select>
+
+    <select id="getAreaPopulation" resultType="org.springblade.common.vo.AreaPopulationVO">
+    select
+            d.property,
+            d.percent,
+            d.type_code as typeCode
+        from
+            tx_analysis d
+				right join
+					(select
+							type_code,
+							max(create_time) time
+					from
+							tx_analysis
+					where
+							type = "population"
+					and
+							type_code != 0
+					group by
+							type_code) t on d.type_code = t.type_code and d.create_time = t.time
+
+        where
+            d.type = "population"
+        and
+            d.type_code != 0
+    </select>
+
+    <select id="sourcePlace" resultType="org.springblade.common.entity.tx.analysis.AnalysisOriginEntity">
+        SELECT province,SUM(percent) percent FROM tx_analysis_origin WHERE CREATE_TIME > DATE_SUB((SELECT MAX(CREATE_TIME) FROM tx_analysis), INTERVAL 4 MINUTE) AND type_code = 0   group by province
+    </select>
+
+    <select id="getAreaBusiness" resultType="org.springblade.common.vo.xc.area.AreaBusinessVO">
+        SELECT people,area_code FROM `tx_area_people_one`
+    </select>
+
+    <select id="migration" resultType="org.springblade.common.entity.tx.MigrationEntity">
+        SELECT
+            car,
+            plane,
+            train
+        FROM
+            `tx_migration`
+        WHERE
+            type = #{type}
+            AND create_time = (SELECT max( create_time ) FROM tx_migration )
+    </select>
+
+
+</mapper>

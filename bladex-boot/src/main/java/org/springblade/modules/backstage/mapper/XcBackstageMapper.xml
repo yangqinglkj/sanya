@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.modules.backstage.mapper.XcBackstageMapper">
+
+    <select id="reserveChannelList" resultType="org.springblade.common.entity.xc.ReserveChannelEntity">
+        SELECT * FROM xc_reserve_channel
+        <where>
+            <if test="day != null and day != ''">
+                and  create_time = #{day}
+            </if>
+            <if test="day == null or  day == ''">
+                and  create_time = (select MAX(create_time) from xc_reserve_channel )
+            </if>
+        </where>
+    </select>
+    <resultMap id="reserveChannelTableMap" type="org.springblade.modules.backstage.vo.xc.ReserveChannelTableVO">
+        <result column="create_time" property="createTime"/>
+        <result column="H5" property="H5"/>
+        <result column="MINI_PROGRAM" property="miniProgram"/>
+        <result column="other" property="other"/>
+        <result column="ALLIANCEAPI" property="allianceApi"/>
+        <result column="APP" property="app"/>
+        <result column="ALIPAY" property="aliPay"/>
+        <result column="BAIDU" property="baidu"/>
+        <result column="ONLINE" property="online"/>
+    </resultMap>
+
+    <select id="getAllColumn" resultType="java.lang.String">
+        select distinct data from xc_reserve_channel
+    </select>
+
+    <select id="reserveChannelTable" resultType="map">
+        SELECT
+        create_time,
+        <if test="list.size() > 0">
+        <foreach collection="list" item="item" separator=",">
+            sum(case data when #{item} then value else 0 end) "${item}"
+        </foreach>
+        </if>
+        FROM
+        `xc_reserve_channel`
+        <where>
+            <if test="startMonth != null and startMonth != ''">
+                and  create_time >= #{startMonth}
+            </if>
+            <if test="endMonth != null and endMonth != '' ">
+                and  create_time &lt;= #{endMonth}
+            </if>
+        </where>
+
+        GROUP BY create_time
+        order by create_time desc
+
+
+    </select>
+
+    <select id="reserveDayList" resultType="org.springblade.common.entity.xc.ReserveDayEntity">
+        SELECT * FROM xc_reserve_day
+        <where>
+            <if test="type != null and  type != '' ">
+                and  type = #{type}
+            </if>
+            <if test="day != null and day !=''">
+                and  create_time = #{day}
+            </if>
+            <if test="day == null or  day == ''">
+                and  create_time = (select MAX(create_time) from xc_reserve_day )
+            </if>
+        </where>
+
+    </select>
+
+    <resultMap id="reserveDayTableMap" type="org.springblade.modules.backstage.vo.xc.ReserveDayTableVO">
+        <result column="createTime" property="createTime"/>
+        <result column="v_type" property="type"/>
+        <result column="zero" property="zero"/>
+        <result column="oneToThree" property="oneToThree"/>
+        <result column="fourToSeven" property="fourToSeven"/>
+        <result column="sevenOver" property="sevenOver"/>
+    </resultMap>
+
+    <select id="getAllDayColumn" resultType="java.lang.String">
+        select distinct data from xc_reserve_day
+    </select>
+
+    <select id="reserveDayTable" resultType="map">
+<!--        SELECT-->
+<!--            create_time as createTime,-->
+<!--            type as v_type,-->
+<!--            sum( CASE data WHEN '0天' THEN VALUE ELSE 0 END ) AS zero,-->
+<!--            sum( CASE WHEN data BETWEEN '1天' AND '3天' THEN VALUE ELSE 0 END ) AS oneToThree,-->
+<!--            sum( CASE WHEN data BETWEEN '4天' AND '7天' THEN VALUE ELSE 0 END ) AS fourToseven,-->
+<!--            sum( CASE WHEN data = '7天以上' THEN VALUE ELSE 0 END ) AS sevenOver-->
+<!--        FROM-->
+<!--            `xc_reserve_day`-->
+<!--        <where>-->
+<!--            <if test="type != null and type != ''">-->
+<!--                and type = #{type}-->
+<!--            </if>-->
+<!--            <if test="startMonth != null and startMonth != ''">-->
+<!--                and  create_time >= #{startMonth}-->
+<!--            </if>-->
+<!--            <if test="endMonth != null and endMonth != '' ">-->
+<!--                and  create_time &lt;= #{endMonth}-->
+<!--            </if>-->
+
+<!--        </where>-->
+<!--        GROUP BY-->
+<!--        create_time,type-->
+<!--        order by create_time desc-->
+        SELECT
+        create_time as createTime,
+        type as type,
+        <if test="list.size() > 0">
+            <foreach collection="list" item="item" separator=",">
+                sum(case data when #{item} then value else 0 end) "${item}"
+            </foreach>
+        </if>
+        FROM
+        `xc_reserve_day`
+        <where>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="startMonth != null and startMonth != ''">
+                and  create_time >= #{startMonth}
+            </if>
+            <if test="endMonth != null and endMonth != '' ">
+                and  create_time &lt;= #{endMonth}
+            </if>
+
+        </where>
+        GROUP BY
+        create_time,type
+        order by create_time desc
+    </select>
+
+
+    <select id="hotelTourist" resultType="org.springblade.common.entity.xc.OutingPurposeEntity">
+        SELECT * FROM `xc_outing_purpose`
+        <where>
+            <if test="date != null  and date != ''">
+                and create_time = #{date}
+            </if>
+            <if test="date == null  or date == ''">
+                and  create_time = (select MAX(create_time) from xc_outing_purpose )
+            </if>
+        </where>
+    </select>
+
+    <select id="hotelTouristTable" resultType="org.springblade.modules.backstage.vo.xc.OutingPurposeVO">
+        SELECT
+            a.createTime,
+            a.child,
+            a.oldPeople,
+            a.business,
+            CAST((a.other + a.family +a.home) AS DECIMAL(20,2)) AS holiday
+        FROM
+            (
+            SELECT
+                create_time as createTime,
+                max( CASE DATA WHEN '商务' THEN VALUE ELSE 0 END ) AS business,
+                max( CASE DATA WHEN '休闲-带老人' THEN VALUE ELSE 0 END ) AS oldPeople,
+                max( CASE DATA WHEN '回家' THEN VALUE ELSE 0 END ) AS home,
+                max( CASE DATA WHEN '休闲-其他' THEN VALUE ELSE 0 END ) AS other,
+                max( CASE DATA WHEN '休闲-带小孩' THEN VALUE ELSE 0 END ) AS child,
+                max( CASE DATA WHEN '休闲-全家' THEN VALUE ELSE 0 END ) AS family
+            FROM
+                xc_outing_purpose
+            <where>
+                <if test="startTime != null and startTime != ''">
+                    and  create_time >= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != '' ">
+                    and  create_time &lt;= #{endTime}
+                </if>
+            </where>
+            GROUP BY
+            createTime
+            order by create_time desc
+            ) a
+
+    </select>
+
+    <resultMap id="topHotelMap" type="org.springblade.modules.backstage.vo.xc.HotelVO">
+        <result column="createTime" property="createTime"/>
+        <result column="top1" property="hotelName1"/>
+        <result column="top2" property="hotelName2"/>
+        <result column="top3" property="hotelName3"/>
+        <result column="top4" property="hotelName4"/>
+        <result column="top5" property="hotelName5"/>
+        <result column="top6" property="hotelName6"/>
+        <result column="top7" property="hotelName7"/>
+        <result column="top8" property="hotelName8"/>
+        <result column="top9" property="hotelName9"/>
+        <result column="top10" property="hotelName10"/>
+    </resultMap>
+
+    <select id="topHotelList" resultMap="topHotelMap">
+        SELECT
+        a.create_time as createTime,
+        a.top1 as top1,
+        a.top2 as top2,
+        a.top3 as top3,
+        a.top4 as top4,
+        a.top5 as top5,
+        a.top6 as top6,
+        a.top7 as top7,
+        a.top8 as top8,
+        a.top9 as top9,
+        a.top10  as top10
+        FROM
+        (
+        SELECT
+        w.create_time,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 0, 1 ) top1,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 1, 1 ) top2,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 2, 1 ) top3,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 3, 1 ) top4,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 4, 1 ) top5,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 5, 1 ) top6,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 6, 1 ) top7,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 7, 1 ) top8,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 8, 1 ) top9,
+        ( SELECT CONCAT_WS("-",`data`,`value`) FROM xc_popular_hotel WHERE create_time = w.create_time ORDER BY SUBSTRING(`value`,1,LENGTH(`value`)-1) +0 DESC LIMIT 9, 1 ) top10
+        FROM
+        `xc_popular_hotel` w
+        ) a
+        <where>
+            <if test="startTime != null and startTime != ''">
+                and  create_time >= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != '' ">
+                and  create_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY
+        createTime
+        order by createTime desc
+    </select>
+
+    <select id="wayList" resultType="org.springblade.common.entity.xc.OutingWayEntity">
+        select * from xc_outing_way  where 1=1
+        <if test="startTime != null and startTime != ''">
+            AND create_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time &lt;= #{endTime}
+        </if>
+        ORDER BY create_time DESC LIMIT 0,30
+    </select>
+
+    <select id="travelCountTable" resultType="org.springblade.common.entity.TravelCount">
+        select * from travel_count
+        <where>
+            <if test="months != null and months != ''">
+                and months = #{months}
+            </if>
+        </where>
+        ORDER BY months DESC
+    </select>
+
+    <select id="allMouthCount" resultType="org.springblade.common.entity.TravelCount">
+        select SUM(domestic) domestic,SUM(oversea) oversea from travel_count
+        <where>
+            <if test="months != null and months != ''">
+                and months = #{months}
+            </if>
+        </where>
+    </select>
+
+    <select id="wayListPage" resultType="org.springblade.common.entity.FollowAndFree">
+        SELECT
+        a.create_time as months,
+        a.top1 as top1,
+        a.top2 as top2 FROM
+        ( SELECT  w.create_time,
+        ( SELECT concat(`data`,':',`value`) FROM xc_outing_way WHERE create_time = w.create_time ORDER BY create_time DESC LIMIT 0, 1 ) top1,
+        ( SELECT concat(`data`,':',`value`) FROM xc_outing_way WHERE create_time = w.create_time ORDER BY create_time DESC LIMIT 1, 1 ) top2
+        FROM
+        `xc_outing_way` w
+        ) a
+        WHERE 1=1
+        <if test="startTime != null and startTime != ''">
+            AND create_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND create_time &lt;= #{endTime}
+        </if>
+        GROUP BY  a.create_time  ORDER BY create_time DESC
+    </select>
+
+    <select id="transportationList" resultType="org.springblade.common.entity.xc.TransportationEntity">
+        SELECT * FROM `xc_transportation`
+        <where>
+            <if test="date != null  and date != ''">
+                and create_time = #{date}
+            </if>
+            <if test="date == null  or date == ''">
+                and  create_time = (select MAX(create_time) from xc_transportation )
+            </if>
+        </where>
+    </select>
+
+    <select id="transportationTable" resultType="org.springblade.common.vo.xc.TransportationVO">
+         SELECT
+            create_time AS createTime,
+            sum( CASE DATA WHEN '机票' THEN VALUE ELSE 0 END ) as plane,
+            sum( CASE DATA WHEN '汽车票' THEN VALUE ELSE 0 END ) as car,
+            sum( CASE DATA WHEN '其他' THEN VALUE ELSE 0 END ) as other
+        FROM
+            `xc_transportation`
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY
+            create_time
+        ORDER BY
+            create_time DESC
+    </select>
+
+    <select id="getTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+         SELECT
+            DATE_FORMAT(max( months ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( months ),'%Y-%m-%d') as minTime
+        FROM
+        `travel_count`
+    </select>
+
+    <select id="getWayListTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_outing_way`
+    </select>
+
+    <select id="getHotelTouristTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_outing_purpose`
+    </select>
+
+    <select id="getReserveDayTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_reserve_day`
+        <where>
+            <if test="type != null and  type != '' ">
+                 type = #{type}
+            </if>
+        </where>
+    </select>
+    <select id="getReserveChannelTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+         SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_reserve_channel`
+    </select>
+
+    <select id="getTopHotelTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_popular_hotel`
+    </select>
+
+    <select id="getTransportationTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+         SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `xc_transportation`
+    </select>
+
+
+</mapper>

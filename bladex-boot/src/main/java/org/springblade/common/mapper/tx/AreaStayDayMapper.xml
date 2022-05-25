@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.common.mapper.tx.AreaStayDayMapper">
+
+    <select id="stayDay" resultType="org.springblade.common.entity.tx.AreaStayDayEntity">
+        SELECT * FROM tx_area_stay_day
+        WHERE  type_code =#{typeCode} ORDER BY create_time ASC
+    </select>
+
+    <select id="stayDaySanYa" resultType="org.springblade.common.entity.tx.AreaStayDayEntity">
+        SELECT * FROM tx_area_stay_day
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND type_code = #{typeCode}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND MONTH(create_time)  &gt;=  MONTH(#{startTime})
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND MONTH(create_time)  &lt;=  MONTH(#{endTime})
+            </if>
+        </where>
+         ORDER BY create_time ASC
+
+    </select>
+
+
+    <select id="touristStop" resultType="org.springblade.common.entity.tx.AreaStayDayEntity">
+        SELECT * FROM tx_area_stay_day
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND type_code = #{typeCode}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND MONTH(create_time)  &gt;=  MONTH(#{startTime})
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND MONTH(create_time)  &lt;=  MONTH(#{endTime})
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `tx_area_stay_day`
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                 type_code = #{typeCode}
+            </if>
+        </where>
+    </select>
+</mapper>

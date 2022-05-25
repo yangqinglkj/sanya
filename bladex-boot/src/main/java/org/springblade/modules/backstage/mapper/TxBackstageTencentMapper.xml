@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.modules.backstage.mapper.TxBackstageTencentMapper">
+
+    <select id="zoneImage" resultType="org.springblade.common.vo.ZoneVO">
+        SELECT
+        t1.property as property,
+        t1.percent as percent,
+        t2.percent as population
+        FROM
+        tx_analysis t1 inner join tx_analysis t2 on t1.type_code = t2.type_code  and t1.create_time = t2.create_time
+        WHERE
+        t1.type_code = #{typeCode}
+        AND t1.type = #{property}
+        AND t2.type ='population'
+        <if test="startTime == ''  and endTime == '' ">
+            AND t1.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis where type = #{property}), INTERVAL 4 MINUTE)
+        </if>
+        <if test="startTime != ''  and endTime != '' ">
+            AND date_format(t1.create_time, '%Y-%m-%d' ) BETWEEN #{startTime} AND #{endTime}
+        </if>
+    </select>
+
+
+    <select id="sourcePlace" resultType="org.springblade.modules.backstage.vo.tx.SourcePlaceVO">
+        SELECT
+            DATE_FORMAT( create_time, '%Y-%m-%d' ) AS time,
+            substring_index( group_concat( DISTINCT province ORDER BY percent desc ), ',', 10 ) as name
+        FROM
+            `tx_analysis_origin`
+        GROUP BY
+            time
+    </select>
+
+
+    <select id="sourceFind" resultType="org.springblade.modules.backstage.vo.tx.SourcePlaceVO">
+        select
+            a.in_people inPeople,
+            a.out_people outPeople,
+            b.time,
+            b.typeCode,
+            b.name
+        from
+            tx_area_real_time_people a,
+            (
+                SELECT
+                    create_time AS time,
+                    type_code AS typeCode,
+                    group_concat(province,'-',percent ORDER BY percent DESC ) AS name
+                FROM
+                    ${tableName}
+                WHERE
+                    1=1
+        <if test="startTime != null and startTime != ''">
+            AND SUBSTRING(create_time,1,10) &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND SUBSTRING(create_time,1,10) &lt;= #{endTime}
+        </if>
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code  =  #{typeCode}
+        </if>
+        GROUP BY  create_time,typeCode  ) b
+        where
+            b.typeCode = a.area_code
+        AND
+            b.time = a.create_time
+        AND
+            a.in_people != 0
+        AND
+            a.out_people != 0
+        ORDER BY b.time DESC
+    </select>
+
+
+    <select id="sourceSanyaAndFour" resultType="org.springblade.modules.backstage.vo.tx.SourcePlaceVO">
+        SELECT a.percent,b.time,b.typeCode,b.name from tx_analysis a,
+        (SELECT  create_time AS time, type_code AS typeCode,
+        group_concat(province,'-',percent ORDER BY percent DESC ) AS name
+        FROM  `tx_analysis_origin`  WHERE 1=1
+        <if test="startTime != null and startTime != ''">
+            AND SUBSTRING(create_time,1,10) &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND SUBSTRING(create_time,1,10) &lt;= #{endTime}
+        </if>
+        <if test="typeCode != null and typeCode != ''">
+            AND type_code  =  #{typeCode}
+        </if>
+        GROUP BY  create_time,typeCode  ) b
+        WHERE b.typeCode = a.type_code AND SUBSTRING(b.time,1,10) = SUBSTRING(a.create_time,1,10)  AND a.type = 'population'
+        ORDER BY b.time DESC
+    </select>
+
+    <select id="sourceSanyaNewTime" resultType="org.springblade.modules.backstage.vo.tx.SourcePlaceVO">
+        SELECT  create_time AS time, type_code AS typeCode,
+        group_concat(province,'-',percent ORDER BY percent DESC ) AS name
+        FROM  `tx_analysis_origin`  WHERE 1=1
+        AND type_code  =  #{typeCode}
+        GROUP BY  create_time,typeCode  ORDER BY time DESC LIMIT 1
+    </select>
+
+
+    <select id="getTotalPeople" resultType="java.lang.Integer">
+        SELECT percent FROM tx_analysis
+        <where>
+            type_code = #{typeCode}  AND type = 'population'
+            <if test="startTime == ''  and endTime == '' ">
+                AND CREATE_TIME = (SELECT MAX( CREATE_TIME ) FROM tx_analysis WHERE type_code = #{typeCode})
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND date_format(create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND date_format(create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="touristImageNew" resultType="org.springblade.common.vo.AreaVO">
+        SELECT
+        property AS name,sum(percent) / #{size} AS value
+        FROM tx_analysis
+        WHERE  type_code = #{typeCode}   AND type = #{property}
+        <if test="startTime == ''  and endTime == '' ">
+            AND CREATE_TIME = (SELECT MAX( CREATE_TIME ) FROM tx_analysis WHERE  type_code = #{typeCode} AND type = #{property})
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND date_format(create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND date_format(create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+        </if>
+        GROUP BY property
+    </select>
+
+    <select id="zoneSourcePlace" resultType="org.springblade.modules.backstage.vo.tx.ZoneSourcePlaceVO">
+        SELECT
+            t1.province AS provinceName,
+            IFNULL(CAST(t1.sanyaSumPercent AS DECIMAL ( 10, 4 )),0)  AS sanyaSumPercent,
+            IFNULL(CAST(t1.sanyaAvgPercent AS DECIMAL ( 10, 4 )),0)  AS sanyaAvgPercent,
+            IFNULL(CAST(t2.haitangSumPercent AS DECIMAL ( 10, 4 )),0) AS haitangSumPercent,
+            IFNULL(CAST(t2.haitangAvgPercent AS DECIMAL ( 10, 4 )),0) AS haitangAvgPercent,
+            IFNULL(CAST(t3.jiyangSumPercent AS DECIMAL ( 10, 4 )),0) AS jiyangSumPercent,
+            IFNULL(CAST(t3.jiyangAvgPercent AS DECIMAL ( 10, 4 )),0) AS jiyangAvgPercent,
+            IFNULL(CAST(t4.tianyaSumPercent AS DECIMAL ( 10, 4 )),0) AS tianyaSumPercent,
+            IFNULL(CAST(t4.tianyaAvgPercent AS DECIMAL ( 10, 4 )),0) AS tianyaAvgPercent,
+            IFNULL(CAST(t5.yazhouSumPercent AS DECIMAL ( 10, 4 )),0) AS yazhouSumPercent,
+            IFNULL(CAST(t5.yazhouAvgPercent AS DECIMAL ( 10, 4 )),0) AS yazhouAvgPercent
+        FROM
+                ( SELECT
+                    SUM( percent ) AS sanyaSumPercent,
+                    AVG( percent ) AS sanyaAvgPercent,
+                    province
+                FROM
+                    tx_analysis_origin o1
+                WHERE
+                    type_code = 0
+                <if test="startTime == ''  and endTime == '' ">
+                    AND o1.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    AND date_format(o1.create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    AND date_format(o1.create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+                </if>
+                GROUP BY province ) t1
+        LEFT JOIN
+                ( SELECT
+                    SUM( percent ) AS haitangSumPercent,
+                    AVG( percent ) AS haitangAvgPercent,
+                    province
+                FROM
+                    tx_analysis_origin o2
+                WHERE
+                    type_code = 1
+                <if test="startTime == ''  and endTime == '' ">
+                    AND o2.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    AND date_format(o2.create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    AND date_format(o2.create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+                </if>
+                GROUP BY province ) t2 ON t2.province = t1.province
+        LEFT JOIN
+                ( SELECT
+                    SUM( percent ) AS jiyangSumPercent,
+                    AVG( percent ) AS jiyangAvgPercent,
+                    province
+                FROM
+                    tx_analysis_origin o3
+                WHERE
+                    type_code = 2
+                <if test="startTime == ''  and endTime == '' ">
+                    AND o3.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    AND date_format(o3.create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    AND date_format(o3.create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+                </if>
+                GROUP BY province ) t3 ON t3.province = t1.province
+        LEFT JOIN
+                ( SELECT
+                    SUM( percent ) AS tianyaSumPercent,
+                    AVG( percent ) AS tianyaAvgPercent,
+                    province
+                FROM
+                    tx_analysis_origin o4
+                WHERE
+                    type_code = 3
+                <if test="startTime == ''  and endTime == '' ">
+                    AND o4.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    AND date_format(o4.create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    AND date_format(o4.create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+                </if>
+                GROUP BY province ) t4 ON t4.province = t1.province
+        LEFT JOIN
+                ( SELECT
+                    SUM( percent ) AS yazhouSumPercent,
+                    AVG( percent ) AS yazhouAvgPercent,
+                    province
+                FROM
+                    tx_analysis_origin o5
+                WHERE
+                    type_code = 4
+                <if test="startTime == ''  and endTime == '' ">
+                    AND o5.create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+                </if>
+                <if test="startTime != null and startTime != ''">
+                    AND date_format(o5.create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+                </if>
+                <if test="endTime != null and endTime != ''">
+                    AND date_format(o5.create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+                </if>
+                GROUP BY province ) t5 ON t5.province = t1.province
+--             order by sanyaSumPercent DESC,sanyaAvgPercent
+    </select>
+
+
+
+
+    <select id="getNewTime" resultType="java.lang.String">
+        SELECT
+            DISTINCT	DATE_FORMAT(create_time,"%Y-%m-%d") create_time
+        FROM
+            tx_analysis_origin
+            WHERE create_time  > DATE_SUB((SELECT MAX(create_time) FROM tx_analysis_origin), INTERVAL 4 MINUTE)
+    </select>
+
+    <select id="getSourcePeople" resultType="org.springblade.modules.backstage.vo.tx.PeopleVo">
+        SELECT
+            sum( percent ) people,
+            type_code AS typeCode
+        FROM
+            tx_analysis
+        WHERE
+            type = "population"
+        <if test="startTime == ''  and endTime == '' ">
+            AND create_time > DATE_SUB(( SELECT MAX( create_time ) FROM tx_analysis WHERE type = "population" ), INTERVAL 4 MINUTE )
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND date_format(create_time, '%Y-%m-%d' ) &gt;= #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND date_format(create_time, '%Y-%m-%d' ) &lt;= #{endTime}
+        </if>
+        GROUP BY
+            type_code
+
+    </select>
+
+    <select id="getTime" resultType="org.springblade.modules.backstage.vo.TimeVO">
+        SELECT
+            DATE_FORMAT(max( create_time ),'%Y-%m-%d') as maxTime,
+            DATE_FORMAT(min( create_time ),'%Y-%m-%d') as minTime
+        FROM
+        `tx_analysis_origin`
+    </select>
+
+</mapper>
